@@ -1,0 +1,614 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes">
+    <title>SWILL EXCHANGE | Аналог ByBit</title>
+    <!-- Библиотека для графиков (Lightweight Charts) -->
+    <script src="https://unpkg.com/lightweight-charts/dist/lightweight-charts.standalone.production.js"></script>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            background-color: #0a0e1a;
+            font-family: 'Segoe UI', 'Roboto', 'Inter', sans-serif;
+            color: #e0e5f0;
+            overflow-x: hidden;
+        }
+
+        /* Основная сетка: три колонки */
+        .app-container {
+            display: flex;
+            flex-direction: column;
+            height: 100vh;
+            max-width: 100vw;
+        }
+
+        /* Верхняя панель */
+        .top-bar {
+            background: #0f1322;
+            border-bottom: 1px solid #1e2a4a;
+            padding: 12px 24px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            flex-wrap: wrap;
+            gap: 15px;
+        }
+
+        .balance-area {
+            display: flex;
+            align-items: baseline;
+            gap: 15px;
+            background: #12172b;
+            padding: 8px 18px;
+            border-radius: 40px;
+            border: 1px solid #2a3a60;
+        }
+
+        .usdt-balance {
+            font-size: 28px;
+            font-weight: bold;
+            color: white;
+        }
+
+        .usdt-small {
+            font-size: 12px;
+            font-weight: 500;
+            color: #8ba0c0;
+            letter-spacing: 1px;
+            margin-left: 6px;
+        }
+
+        .deposit-btn {
+            background: linear-gradient(135deg, #1e88e5, #0d47a1);
+            border: none;
+            color: white;
+            padding: 8px 24px;
+            border-radius: 32px;
+            font-weight: bold;
+            font-size: 16px;
+            cursor: pointer;
+            transition: 0.2s;
+            box-shadow: 0 2px 8px rgba(30,136,229,0.3);
+        }
+
+        .deposit-btn:hover {
+            transform: scale(1.02);
+            background: linear-gradient(135deg, #42a5f5, #1565c0);
+        }
+
+        /* Три колонки (профиль, рынок, активы) */
+        .three-columns {
+            display: flex;
+            flex: 1;
+            overflow: hidden;
+            gap: 1px;
+            background-color: #1a1f30;
+        }
+
+        /* Левая колонка: профиль */
+        .profile-panel {
+            width: 260px;
+            background: #0c1020;
+            padding: 20px 16px;
+            display: flex;
+            flex-direction: column;
+            gap: 20px;
+            border-right: 1px solid #1e2a4a;
+            overflow-y: auto;
+        }
+
+        .avatar {
+            width: 70px;
+            height: 70px;
+            background: linear-gradient(145deg, #1e3a8a, #0f172a);
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 32px;
+            border: 2px solid #2e4a7a;
+            margin-bottom: 8px;
+        }
+
+        .username {
+            font-size: 20px;
+            font-weight: bold;
+            margin-top: 6px;
+        }
+
+        .user-email {
+            font-size: 12px;
+            color: #6c86a8;
+        }
+
+        .profile-stats {
+            margin-top: 15px;
+            background: #0f1428;
+            padding: 12px;
+            border-radius: 16px;
+        }
+
+        .stat-item {
+            display: flex;
+            justify-content: space-between;
+            margin: 10px 0;
+            font-size: 14px;
+        }
+
+        /* Средняя колонка: рынок / график */
+        .market-panel {
+            flex: 1;
+            background: #0b0f1c;
+            display: flex;
+            flex-direction: column;
+            overflow: hidden;
+            padding: 16px;
+        }
+
+        .chart-header {
+            display: flex;
+            flex-wrap: wrap;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 18px;
+            gap: 10px;
+        }
+
+        .symbol-selector {
+            background: #0f1325;
+            padding: 6px 12px;
+            border-radius: 28px;
+            border: 1px solid #2a3a60;
+        }
+
+        .symbol-selector select {
+            background: transparent;
+            color: white;
+            border: none;
+            font-size: 16px;
+            font-weight: bold;
+            outline: none;
+            cursor: pointer;
+        }
+
+        .timeframe-buttons {
+            display: flex;
+            gap: 8px;
+            flex-wrap: wrap;
+        }
+
+        .time-btn {
+            background: #11172b;
+            border: 1px solid #253755;
+            color: #b8c7e7;
+            padding: 5px 12px;
+            border-radius: 20px;
+            font-size: 12px;
+            cursor: pointer;
+            transition: 0.1s;
+        }
+
+        .time-btn.active {
+            background: #1e88e5;
+            border-color: #1e88e5;
+            color: white;
+        }
+
+        #chart-container {
+            width: 100%;
+            height: 450px;
+            background: #060914;
+            border-radius: 16px;
+            border: 1px solid #1e2e4e;
+        }
+
+        /* Правая колонка: активы */
+        .assets-panel {
+            width: 300px;
+            background: #0c1020;
+            padding: 20px;
+            border-left: 1px solid #1e2a4a;
+            overflow-y: auto;
+            display: flex;
+            flex-direction: column;
+            gap: 20px;
+        }
+
+        .total-balance-card {
+            background: #0f1428;
+            padding: 18px;
+            border-radius: 24px;
+            text-align: center;
+            border-bottom: 2px solid #1e88e5;
+        }
+
+        .total-label {
+            font-size: 14px;
+            color: #8ba0c0;
+        }
+
+        .total-amount {
+            font-size: 32px;
+            font-weight: bold;
+            margin: 8px 0;
+        }
+
+        .asset-list {
+            display: flex;
+            flex-direction: column;
+            gap: 14px;
+        }
+
+        .asset-row {
+            display: flex;
+            justify-content: space-between;
+            background: #0b0f1c;
+            padding: 12px;
+            border-radius: 16px;
+        }
+
+        .action-buttons {
+            display: flex;
+            gap: 12px;
+            margin-top: 10px;
+        }
+
+        .action-btn {
+            flex: 1;
+            background: #151e36;
+            border: none;
+            color: white;
+            padding: 12px;
+            border-radius: 28px;
+            font-weight: bold;
+            cursor: pointer;
+            transition: 0.2s;
+        }
+
+        .action-btn.deposit {
+            background: #1e88e5;
+        }
+
+        .action-btn.withdraw {
+            background: #2c3e66;
+        }
+
+        /* Нижняя вспомогательная строка */
+        .bottom-helper {
+            background: #070b16;
+            border-top: 1px solid #1e2a4a;
+            padding: 12px 24px;
+            display: flex;
+            gap: 24px;
+            flex-wrap: wrap;
+            font-size: 13px;
+            color: #7890b0;
+            justify-content: center;
+        }
+
+        /* Модальные окна */
+        .modal {
+            display: none;
+            position: fixed;
+            top: 0; left: 0;
+            width: 100%; height: 100%;
+            background: rgba(0,0,0,0.8);
+            z-index: 1000;
+            justify-content: center;
+            align-items: center;
+        }
+        .modal-content {
+            background: #0f1428;
+            max-width: 500px;
+            width: 90%;
+            padding: 28px;
+            border-radius: 32px;
+            border-top: 3px solid #1e88e5;
+        }
+        .modal select, .modal input, .modal button {
+            width: 100%;
+            margin: 12px 0;
+            padding: 12px;
+            border-radius: 28px;
+            background: #0b0f1c;
+            border: 1px solid #2a3a60;
+            color: white;
+        }
+        .close-modal {
+            background: #1e88e5;
+            border: none;
+            font-weight: bold;
+        }
+
+        @media (max-width: 800px) {
+            .profile-panel, .assets-panel {
+                width: 220px;
+            }
+            .balance-area {
+                padding: 4px 12px;
+            }
+            .usdt-balance {
+                font-size: 20px;
+            }
+        }
+        @media (max-width: 650px) {
+            .three-columns {
+                flex-direction: column;
+            }
+            .profile-panel, .assets-panel, .market-panel {
+                width: 100%;
+                border: none;
+            }
+            #chart-container {
+                height: 320px;
+            }
+        }
+    </style>
+</head>
+<body>
+<div class="app-container">
+    <!-- Верхняя панель: баланс USDT и кнопка депозит -->
+    <div class="top-bar">
+        <div class="balance-area">
+            <span class="usdt-balance" id="usdtBalance">0.00</span>
+            <span class="usdt-small">USD</span>
+        </div>
+        <button class="deposit-btn" id="mainDepositBtn">Депозит</button>
+    </div>
+
+    <!-- Три колонки -->
+    <div class="three-columns">
+        <!-- ЛЕВАЯ КОЛОНКА: ПРОФИЛЬ -->
+        <div class="profile-panel">
+            <div style="text-align: center;">
+                <div class="avatar" style="margin: 0 auto;">👤</div>
+                <div class="username">CryptoTrader_77</div>
+                <div class="user-email">user@swillx.com</div>
+            </div>
+            <div class="profile-stats">
+                <div class="stat-item"><span>📊 Уровень</span><span>VIP 2</span></div>
+                <div class="stat-item"><span>🔄 Сделок</span><span>147</span></div>
+                <div class="stat-item"><span>🏆 P&L</span><span style="color:#2ecc71;">+342 USDT</span></div>
+            </div>
+        </div>
+
+        <!-- СРЕДНЯЯ КОЛОНКА: РЫНОК / ГРАФИК ФЬЮЧЕРСЫ -->
+        <div class="market-panel">
+            <div class="chart-header">
+                <div class="symbol-selector">
+                    <select id="symbolSelect">
+                        <option value="TON/USD">TON/USD</option>
+                        <option value="BTC/USDT" selected>BTC/USDT</option>
+                        <option value="ETH/USDT">ETH/USDT</option>
+                        <option value="BNB/USD">BNB/USD</option>
+                    </select>
+                </div>
+                <div class="timeframe-buttons" id="timeframeGroup">
+                    <button data-time="1m" class="time-btn">1мин</button>
+                    <button data-time="3m" class="time-btn">3мин</button>
+                    <button data-time="5m" class="time-btn">5мин</button>
+                    <button data-time="15m" class="time-btn active">15мин</button>
+                    <button data-time="1h" class="time-btn">1час</button>
+                    <button data-time="4h" class="time-btn">4час</button>
+                    <button data-time="1d" class="time-btn">1день</button>
+                </div>
+            </div>
+            <div id="chart-container"></div>
+            <div style="margin-top: 14px; font-size:12px; color:#4a6080; text-align:center;">⚡ Фьючерсы TON/BTC/ETH — японские свечи</div>
+        </div>
+
+        <!-- ПРАВАЯ КОЛОНКА: АКТИВЫ -->
+        <div class="assets-panel">
+            <div class="total-balance-card">
+                <div class="total-label">ОБЩИЙ БАЛАНС</div>
+                <div class="total-amount" id="totalBalanceUsd">0.00 USD</div>
+                <div style="font-size:12px;">включая все активы</div>
+            </div>
+            <div class="asset-list" id="assetList">
+                <!-- динамические активы через js -->
+            </div>
+            <div class="action-buttons">
+                <button class="action-btn deposit" id="assetsDepositBtn">Депозит</button>
+                <button class="action-btn withdraw" id="assetsWithdrawBtn">Вывод средств</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- НИЖНЯЯ ВСПОМОГАТЕЛЬНАЯ СТРОКА -->
+    <div class="bottom-helper">
+        <span>📞 Поддержка 24/7</span>
+        <span>⚡ Комиссия 0.05%</span>
+        <span>🔒 Безопасность 2FA</span>
+        <span>📊 Торговые сигналы</span>
+        <span>💎 SWILL Exchange © 2025</span>
+    </div>
+</div>
+
+<!-- МОДАЛ ДЕПОЗИТА -->
+<div id="depositModal" class="modal">
+    <div class="modal-content">
+        <h3 style="margin-bottom:16px;">Пополнение баланса</h3>
+        <label>Выберите валюту:</label>
+        <select id="depositCurrency">
+            <option value="USDT">USDT (TRC20)</option>
+            <option value="BTC">Bitcoin (BTC)</option>
+            <option value="ETH">Ethereum (ETH)</option>
+            <option value="TON">TON</option>
+        </select>
+        <label>Способ пополнения:</label>
+        <select id="depositMethod">
+            <option value="card">Перевод с карты на карту</option>
+            <option value="wallet">Со стороннего кошелька</option>
+        </select>
+        <input type="number" id="depositAmount" placeholder="Сумма в USDT" value="100">
+        <button id="confirmDepositBtn" class="close-modal">Подтвердить депозит</button>
+        <button id="closeDepositModal" style="background:#2c3e66;">Отмена</button>
+    </div>
+</div>
+
+<!-- МОДАЛ ВЫВОДА -->
+<div id="withdrawModal" class="modal">
+    <div class="modal-content">
+        <h3>Вывод средств</h3>
+        <label>Способ вывода:</label>
+        <select id="withdrawType">
+            <option value="card">На карту (RUB / USD)</option>
+            <option value="external">На сторонний кошелек</option>
+        </select>
+        <input type="text" id="withdrawAddress" placeholder="Адрес кошелька или номер карты">
+        <input type="number" id="withdrawAmount" placeholder="Сумма в USDT">
+        <button id="confirmWithdrawBtn">Вывести</button>
+        <button id="closeWithdrawModal">Отмена</button>
+    </div>
+</div>
+
+<script>
+    // ---------- ДАННЫЕ ПОЛЬЗОВАТЕЛЯ И АКТИВЫ ----------
+    let userAssets = {
+        USDT: 1240.75,
+        BTC: 0.023,
+        ETH: 0.42,
+        TON: 85.3
+    };
+    const prices = { USDT:1, BTC: 61000, ETH: 3400, TON: 5.2 };
+    
+    function updateBalancesUI() {
+        let total = 0;
+        for (let [asset, amount] of Object.entries(userAssets)) {
+            let price = prices[asset] || 1;
+            total += amount * price;
+        }
+        document.getElementById('usdtBalance').innerText = total.toFixed(2);
+        document.getElementById('totalBalanceUsd').innerText = total.toFixed(2) + " USD";
+        
+        // отображаем активы
+        const assetDiv = document.getElementById('assetList');
+        assetDiv.innerHTML = '';
+        for(let [asset, amount] of Object.entries(userAssets)) {
+            let val = (amount * (prices[asset]||1)).toFixed(2);
+            assetDiv.innerHTML += `<div class="asset-row"><span>${asset}</span><span>${amount.toFixed(4)} ≈ ${val} USD</span></div>`;
+        }
+    }
+    
+    // ---------- ГЕНЕРАЦИЯ ЯПОНСКИХ СВЕЧЕЙ (симуляция) ----------
+    let chart = null;
+    let currentSeries = null;
+    let currentSymbol = "BTC/USDT";
+    let currentTimeframe = "15m";
+    
+    function generateCandles(symbol, timeframe, points=60) {
+        // симуляция цены в зависимости от символа
+        let basePrice = symbol.includes("BTC") ? 61000 : (symbol.includes("ETH") ? 3400 : (symbol.includes("TON") ? 5.2 : 100));
+        let volatility = symbol.includes("BTC") ? 400 : (symbol.includes("ETH") ? 80 : 0.4);
+        let candles = [];
+        let time = Date.now() - points * 60000;
+        let lastClose = basePrice;
+        for (let i=0; i<points; i++) {
+            let open = lastClose;
+            let change = (Math.random() - 0.5) * volatility;
+            let close = open + change;
+            let high = Math.max(open, close) + Math.random() * volatility * 0.5;
+            let low = Math.min(open, close) - Math.random() * volatility * 0.5;
+            let interval = timeframe === "1m" ? 60000 : (timeframe === "3m" ? 180000 : (timeframe === "5m" ? 300000 : (timeframe === "15m" ? 900000 : (timeframe === "1h" ? 3600000 : (timeframe === "4h" ? 14400000 : 86400000)))));
+            time += interval;
+            candles.push({ time: time / 1000, open, high, low, close });
+            lastClose = close;
+        }
+        return candles;
+    }
+    
+    function renderChart() {
+        const container = document.getElementById('chart-container');
+        if (chart) {
+            chart.remove();
+        }
+        chart = LightweightCharts.createChart(container, {
+            width: container.clientWidth,
+            height: 430,
+            layout: { background: { color: '#060914' }, textColor: '#d0e0ff' },
+            grid: { vertLines: { color: '#1a2340' }, horzLines: { color: '#1a2340' } },
+            timeScale: { timeVisible: true, borderColor: '#2a3a60' }
+        });
+        const candleSeries = chart.addCandlestickSeries({
+            upColor: '#2ecc71', downColor: '#e74c3c', borderDownColor: '#c0392b', borderUpColor: '#27ae60',
+            wickUpColor: '#2ecc71', wickDownColor: '#e74c3c'
+        });
+        let candles = generateCandles(currentSymbol, currentTimeframe, 80);
+        candleSeries.setData(candles);
+        chart.timeScale().fitContent();
+        currentSeries = candleSeries;
+        window.addEventListener('resize', () => { if(chart) chart.applyOptions({ width: container.clientWidth }); });
+    }
+    
+    document.getElementById('symbolSelect').addEventListener('change', (e) => {
+        currentSymbol = e.target.value;
+        renderChart();
+    });
+    document.querySelectorAll('.time-btn').forEach(btn => {
+        btn.addEventListener('click', (e) => {
+            document.querySelectorAll('.time-btn').forEach(b => b.classList.remove('active'));
+            btn.classList.add('active');
+            currentTimeframe = btn.getAttribute('data-time');
+            renderChart();
+        });
+    });
+    
+    // Модальные окна
+    const depositModal = document.getElementById('depositModal');
+    const withdrawModal = document.getElementById('withdrawModal');
+    
+    function openDeposit() { depositModal.style.display = 'flex'; }
+    function closeDeposit() { depositModal.style.display = 'none'; }
+    function openWithdraw() { withdrawModal.style.display = 'flex'; }
+    function closeWithdraw() { withdrawModal.style.display = 'none'; }
+    
+    document.getElementById('mainDepositBtn').onclick = openDeposit;
+    document.getElementById('assetsDepositBtn').onclick = openDeposit;
+    document.getElementById('assetsWithdrawBtn').onclick = openWithdraw;
+    document.getElementById('closeDepositModal').onclick = closeDeposit;
+    document.getElementById('closeWithdrawModal').onclick = closeWithdraw;
+    
+    document.getElementById('confirmDepositBtn').onclick = () => {
+        let currency = document.getElementById('depositCurrency').value;
+        let method = document.getElementById('depositMethod').value;
+        let amount = parseFloat(document.getElementById('depositAmount').value);
+        if(isNaN(amount)) amount = 0;
+        if(amount > 0) {
+            if(currency === 'USDT') userAssets.USDT += amount;
+            else if(currency === 'BTC') userAssets.BTC += amount / prices.BTC;
+            else if(currency === 'ETH') userAssets.ETH += amount / prices.ETH;
+            else if(currency === 'TON') userAssets.TON += amount / prices.TON;
+            alert(`Депозит ${amount} USDT через ${method === 'card' ? 'карту' : 'кошелек'} выполнен!`);
+            updateBalancesUI();
+        } else alert("Введите сумму");
+        closeDeposit();
+    };
+    
+    document.getElementById('confirmWithdrawBtn').onclick = () => {
+        let type = document.getElementById('withdrawType').value;
+        let address = document.getElementById('withdrawAddress').value;
+        let amount = parseFloat(document.getElementById('withdrawAmount').value);
+        if(isNaN(amount) || amount <= 0) { alert("Сумма некорректна"); return; }
+        if(userAssets.USDT >= amount) {
+            userAssets.USDT -= amount;
+            alert(`Вывод ${amount} USDT на ${type === 'card' ? 'карту' : 'кошелек'} (${address || 'адрес указан'}) выполнен.`);
+            updateBalancesUI();
+        } else alert("Недостаточно USDT на балансе");
+        closeWithdraw();
+    };
+    
+    // Закрытие модалов по клику вне
+    window.onclick = (e) => { if(e.target === depositModal) closeDeposit(); if(e.target === withdrawModal) closeWithdraw(); };
+    
+    // Инициализация
+    updateBalancesUI();
+    renderChart();
+</script>
+</body>
+</html>
